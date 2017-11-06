@@ -26,17 +26,6 @@ headers = {
 }
 
 
-def create_csv():
-    with open('lianjia.csv', 'w', newline='') as f:
-        f_csv = csv.writer(f)
-        fields = [
-            'href', 'title', 'compound', 'layout', 'gross_floor_area', 'distribute',
-            'floor', 'structure', 'rent_per_month', 'added_at', 'total_views', 'subway_line',
-            'subway_station', 'subway_distance'
-        ]
-        f_csv.writerow(fields)
-
-
 class Crawler:
     def __init__(self, roots, loop, max_tries=5, max_tasks=10):
         self.loop = loop
@@ -125,14 +114,7 @@ class Crawler:
             #     self.add_url(link)
             # self.seen_urls.update(links)
             for item in results:
-                self.record_result(item)
                 self.done.append(item)
         finally:
             await response.release()
             await asyncio.sleep(INTERVAL)
-
-    def record_result(self, result):
-        pprint(result)
-        with open('lianjia.csv', 'a+', newline='') as f:
-            f_csv = csv.writer(f)
-            f_csv.writerow(result.values())
