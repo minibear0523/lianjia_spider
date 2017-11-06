@@ -60,7 +60,7 @@ class Crawler:
         if response.status == 200:
             content_type = response.headers.get('content-type')
             if content_type:
-                cotnent_type, _ = cgi.parse_header(content_type)
+                content_type, _ = cgi.parse_header(content_type)
             if content_type in ('text/html', 'application/xml'):
                 text = await response.text()
                 return etree.HTML(text.encode('utf-8'))
