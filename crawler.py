@@ -11,8 +11,10 @@ from urllib.parse import urlparse, urljoin, splitport
 import csv
 import time
 from asyncio import Queue
-from settings import USER_AGENTS, INTINTERVAL
+from settings import USER_AGENTS, INTERVAL
 from parser import Parser
+import random
+from pprint import pprint
 
 
 headers = {
@@ -22,6 +24,17 @@ headers = {
     'Upgrade-Insecure-Requests': '1',
     'User-Agent': random.choice(USER_AGENTS)
 }
+
+
+def create_csv():
+    with open('lianjia.csv', 'w', newline='') as f:
+        f_csv = csv.writer(f)
+        fields = [
+            'href', 'title', 'compound', 'layout', 'gross_floor_area', 'distribute',
+            'floor', 'structure', 'rent_per_month', 'added_at', 'total_views', 'subway_line',
+            'subway_station', 'subway_distance'
+        ]
+        f_csv.writerow(fields)
 
 
 class Crawler:
@@ -56,7 +69,7 @@ class Crawler:
         self.seen_urls.add(url)
         self.q.put_nowait(url)
 
-    async def fetch_etree(response):
+    async def fetch_etree(self, response):
         if response.status == 200:
             content_type = response.headers.get('content-type')
             if content_type:
@@ -99,15 +112,27 @@ class Crawler:
             return
 
         try:
+            print(response)
             tree = await self.fetch_etree(response)
             parser = Parser()
-            result, links = parser.parse(tree, url)
-            for link in links.difference(self.seen_urls):
-                self.add_url(link)
-            self.seen_urls.update(links)
+            try:
+                results, links = parser.parse_list(tree)
+            except Exception as e:
+                print(e)
+            pprint(results)
+            pprint(links)
+            # for link in links.difference(self.seen_urls):
+            #     self.add_url(link)
+            # self.seen_urls.update(links)
+            for item in results:
+                self.record_result(item)
+                self.done.append(item)
         finally:
             await response.release()
             await asyncio.sleep(INTERVAL)
 
     def record_result(self, result):
-        pass
+        pprint(result)
+        with open('lianjia.csv', 'a+', newline='') as f:
+            f_csv = csv.writer(f)
+            f_csv.writerow(result.values())
